@@ -1,8 +1,9 @@
+import os
+import io
+import uvicorn
+import PyPDF2
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import io
-import PyPDF2
 
 # Import our ML functions
 from ml_core import calculate_ats_score, analyze_skills
@@ -18,24 +19,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health Check Route for UptimeRobot
-@app.get("/")
+# Health Check Route (GET and HEAD for UptimeRobot/BetterStack)
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "Alive", "message": "Rizzume ML Engine is running perfectly! 🚀"}
 
 @app.post("/api/extract")
 async def extract_data(
     file: UploadFile = File(...), 
-    job_description: str = Form("Software Engineer") # Default fallback
+    job_description: str = Form("Software Engineer")
 ):
     try:
         print(f"📥 Receiving file: {file.filename} for job: {job_description}")
         
-        # 1. Read the PDF File from Buffer
         pdf_bytes = await file.read()
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
         
-        # 2. Extract Text from PDF Pages
         resume_text = ""
         for page in pdf_reader.pages:
             extracted = page.extract_text()
@@ -47,11 +46,9 @@ async def extract_data(
 
         print("🧠 Analyzing text with ML Brain...")
         
-        # 3. Run ML Analysis
         ats_score = calculate_ats_score(resume_text, job_description)
         skills = analyze_skills(resume_text, job_description)
         
-        # 4. Return EXACT format expected by Node.js analyze.js
         return {
             "status": "success",
             "data": {
@@ -69,5 +66,7 @@ async def extract_data(
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    print("🚀 Starting ML API on Port 8000...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Render assigns a dynamic port, so we must use os.environ.get
+    port = int(os.environ.get("PORT", 8000))
+    print(f"🚀 Starting ML API on Port {port}...")
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
