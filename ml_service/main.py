@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import io
-import PyPDF2  
+import PyPDF2
 
 # Import our ML functions
 from ml_core import calculate_ats_score, analyze_skills
@@ -18,11 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health Check Route for UptimeRobot
 @app.get("/")
 def health_check():
-    return {"status": "online", "message": "ML Engine is ready to read PDFs! 📄"}
+    return {"status": "Alive", "message": "Rizzume ML Engine is running perfectly! 🚀"}
 
-# 🔥 THIS EXACTLY MATCHES YOUR analyze.js LOGIC 🔥
 @app.post("/api/extract")
 async def extract_data(
     file: UploadFile = File(...), 
